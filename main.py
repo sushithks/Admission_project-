@@ -39,7 +39,7 @@ def insert_enquiry_and_handle_next_step(data):
         data.get('notes'),
         data.get('lead_owner'),
         data.get('next_step'),
-        'Live'
+        ''
     )
 
     cursor.execute(insert_query, values)

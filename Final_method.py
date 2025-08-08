@@ -321,5 +321,28 @@ def offered_list():
     rows = run_query("SELECT * FROM offered ORDER BY offer_date IS NULL, offer_date", fetch=True, dicts=True)
     return render_template_string(offered_tpl, rows=rows)
 
+@app.route('/offered/<int:eid>/update', methods=['POST'])
+def offered_update(eid):
+    offer_date = request.form.get('offer_date') or None
+    offer_status = request.form.get('offer_status') or None
+    payment = request.form.get('payment_status') or None
+
+    follow_up = None
+    if payment == 'No Payment' and offer_date:
+        follow_up = (datetime.strptime(offer_date, "%Y-%m-%d") + timedelta(days=7)).strftime("%Y-%m-%d")
+
+    run_query("""
+      UPDATE offered SET offer_date=%s, offer_status=%s, payment_status=%s, follow_up_needed=%s
+      WHERE enquiry_id=%s
+    """, (offer_date, offer_status, payment, follow_up, eid))
+
+    return redirect('/offered')
+
+# ---- Appointments (view) ----
+@app.route('/appointments')
+def appointments_list():
+    rows = run_query("SELECT * FROM appointments ORDER BY appointment_date, appointment_time", fetch=True, dicts=True)
+    return render_template_string(appts_tpl, rows=rows)
+
 if __name__ == '__main__':
     app.run(debug=True)

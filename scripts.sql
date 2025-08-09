@@ -192,3 +192,23 @@ CREATE TABLE IF NOT EXISTS offered (
   KEY (enquiry_id)
 );
 
+
+
+CREATE OR REPLACE VIEW appointments AS
+SELECT
+  tour_date AS appointment_date,
+  tour_time AS appointment_time,
+  CONCAT(parent_first_name, ' ', parent_last_name) AS parent_name,
+  phone_number,
+  'Tour' AS appointment_type
+FROM tours
+WHERE tour_date IS NOT NULL
+UNION
+SELECT
+  assessment_date AS appointment_date,
+  assessment_time AS appointment_time,
+  CONCAT(parent_first_name, ' ', parent_last_name) AS parent_name,
+  phone_number,
+  'Assessment' AS appointment_type
+FROM assessments
+WHERE assessment_date IS NOT NULL;

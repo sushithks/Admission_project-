@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ "Admissions Console" }}</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+  body { background: #0b1727; color: #e8eef6; }
+  .navbar { background: linear-gradient(90deg, #0f2847, #12355b); }
+  .nav-link, .navbar-brand { color: #e8eef6 !important; }
+  .card { background: #132338; border: 1px solid #204164; }
+  table { color: #dce7f5; }
+  .table thead th { color: #9EC5FE; border-color: #204164; }
+  .table tbody td { border-color: #204164; vertical-align: middle; }
+  .badge-status-live { background:#0d6efd; }
+  .badge-status-closed { background:#6c757d; }
+  .badge-payment-green { background:#198754; }
+  .badge-payment-orange { background:#fd7e14; }
+  .badge-payment-red { background:#dc3545; }
+  .form-select, .form-control, .form-check-input { background:#0b1727; color:#e8eef6; border:1px solid #204164; }
+  .btn-primary { background:#0d6efd; border-color:#0b5ed7; }
+  .btn-outline-light { border-color:#9EC5FE; color:#9EC5FE; }
+  .btn-outline-light:hover { background:#9EC5FE; color:#0b1727; }
+  a.table-link { color:#9EC5FE; text-decoration:none; }
+  a.table-link:hover { text-decoration:underline; }
+  .mini { font-size: .9rem; color:#9bb3ce; }
+  .sticky-top-shadow { box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+</style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg sticky-top sticky-top-shadow">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="{{ url_for('enquiries_list') }}"><i class="bi bi-building-fill"></i> Admissions Console</a>
+    <button class="navbar-toggler text-light" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon" style="filter: invert(100%);"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('enquiries_list') }}"><i class="bi bi-table"></i> Enquiries</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('tours_list') }}"><i class="bi bi-geo-alt-fill"></i> Tours</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('assessments_list') }}"><i class="bi bi-clipboard2-check-fill"></i> Assessments</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('offered_list') }}"><i class="bi bi-envelope-open-heart-fill"></i> Offered</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('appointments_list') }}"><i class="bi bi-calendar2-week-fill"></i> Appointments</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-4">
+
+{% if page == 'enquiries' %}
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="mb-0"><i class="bi bi-table"></i> Enquiries</h4>
+      <span class="mini">Change <em>Next Step</em> to route items to Tours / Assessments / Follow-ups / Closed</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>ID</th><th>Date</th><th>Parent</th><th>Email</th><th>Phone</th>
+            <th>Nationality</th><th>Children</th><th>Curriculum</th>
+            <th>Owner</th><th>Next Step</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td class="fw-semibold">{{ r.enquiry_id }}</td>
+            <td>{{ r.enquiry_date or '' }}</td>
+            <td>{{ r.parent_first_name }} {{ r.parent_last_name }}</td>
+            <td><a class="table-link" href="mailto:{{ r.parent_email }}">{{ r.parent_email }}</a></td>
+            <td>{{ r.country_code }} {{ r.phone_number }}</td>
+            <td>
+              {{ r.nationality }}
+              {% if r.nationality == 'Other' and r.nationality_other %}<span class="mini">({{ r.nationality_other }})</span>{% endif %}
+            </td>
+            <td>{{ r.number_of_children }}</td>
+            <td>{{ r.current_curriculum }}</td>
+            <td>{{ r.lead_owner }}</td>
+            <td style="min-width: 220px;">
+              <form method="post" action="{{ url_for('enquiries_update', eid=r.enquiry_id) }}">
+                <select class="form-select form-select-sm" name="next_step" onchange="this.form.submit()">
+                  <option value="" {{ 'selected' if not r.next_step else '' }}>--</option>
+                  <option value="Tour Booked" {{ 'selected' if r.next_step=='Tour Booked' else '' }}>Tour Booked</option>
+                  <option value="Assessment Booked" {{ 'selected' if r.next_step=='Assessment Booked' else '' }}>Assessment Booked</option>
+                  <option value="No Reply" {{ 'selected' if r.next_step=='No Reply' else '' }}>No Reply</option>
+                  <option value="Closed Lead" {{ 'selected' if r.next_step=='Closed Lead' else '' }}>Closed Lead</option>
+                </select>
+              </form>
+            </td>
+            <td>
+              {% if r.lead_status=='Live' %}
+                <span class="badge rounded-pill badge-status-live">Live</span>
+              {% else %}
+                <span class="badge rounded-pill badge-status-closed">Closed</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if page == 'tours' %}
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="mb-0"><i class="bi bi-geo-alt-fill"></i> Tours</h4>
+      <span class="mini">Set tour date/time; mark Took the Tour; route next step</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>ID</th><th>Parent</th><th>Tour Date</th><th>Tour Time</th>
+            <th>Took?</th><th>Next Step</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <form method="post" action="{{ url_for('tours_update', eid=r.enquiry_id) }}">
+              <td class="fw-semibold">{{ r.enquiry_id }}</td>
+              <td>{{ r.parent_first_name }} {{ r.parent_last_name }}</td>
+              <td><input class="form-control form-control-sm" type="date" name="tour_date" value="{{ r.tour_date or '' }}"></td>
+              <td><input class="form-control form-control-sm" type="time" name="tour_time" value="{{ r.tour_time or '' }}"></td>
+              <td>
+                <select class="form-select form-select-sm" name="took_the_tour">
+                  <option value=""></option>
+                  <option value="Yes" {{ 'selected' if r.took_the_tour=='Yes' else '' }}>Yes</option>
+                  <option value="No"  {{ 'selected' if r.took_the_tour=='No' else '' }}>No</option>
+                </select>
+              </td>
+              <td>
+                <select class="form-select form-select-sm" name="next_step_after_tour">
+                  <option value=""></option>
+                  <option value="Assessment Booked" {{ 'selected' if r.next_step_after_tour=='Assessment Booked' else '' }}>Assessment Booked</option>
+                  <option value="No Reply" {{ 'selected' if r.next_step_after_tour=='No Reply' else '' }}>No Reply</option>
+                  <option value="Closed Lead" {{ 'selected' if r.next_step_after_tour=='Closed Lead' else '' }}>Closed Lead</option>
+                </select>
+              </td>
+              <td><button class="btn btn-sm btn-primary"><i class="bi bi-save"></i> Save</button></td>
+            </form>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a href="{{ url_for('enquiries_list') }}" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+  </div>
+</div>
+{% endif %}
+
+{% if page == 'assessments' %}
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="mb-0"><i class="bi bi-clipboard2-check-fill"></i> Assessments</h4>
+      <span class="mini">Set date/time, link notes, mark Offered & Letter Sent</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>ID</th><th>Parent</th><th>Date</th><th>Time</th><th>Notes Link</th>
+            <th>Offered?</th><th>Letter Sent?</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <form method="post" action="{{ url_for('assessments_update', eid=r.enquiry_id) }}">
+              <td class="fw-semibold">{{ r.enquiry_id }}</td>
+              <td>{{ r.parent_first_name }} {{ r.parent_last_name }}</td>
+              <td><input class="form-control form-control-sm" type="date" name="assessment_date" value="{{ r.assessment_date or '' }}"></td>
+              <td><input class="form-control form-control-sm" type="time" name="assessment_time" value="{{ r.assessment_time or '' }}"></td>
+              <td><input class="form-control form-control-sm" type="url" name="assessment_notes_link" value="{{ r.assessment_notes_link or '' }}" placeholder="https://..."></td>
+              <td>
+                <select class="form-select form-select-sm" name="offered">
+                  <option value=""></option>
+                  <option value="Yes" {{ 'selected' if r.offered=='Yes' else '' }}>Yes</option>
+                  <option value="No"  {{ 'selected' if r.offered=='No' else '' }}>No</option>
+                </select>
+              </td>
+              <td>
+                <select class="form-select form-select-sm" name="letter_sent">
+                  <option value=""></option>
+                  <option value="Yes" {{ 'selected' if r.letter_sent=='Yes' else '' }}>Yes</option>
+                  <option value="No"  {{ 'selected' if r.letter_sent=='No' else '' }}>No</option>
+                </select>
+              </td>
+              <td><button class="btn btn-sm btn-primary"><i class="bi bi-save"></i> Save</button></td>
+            </form>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a href="{{ url_for('enquiries_list') }}" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+  </div>
+</div>
+{% endif %}
+
+{% if page == 'offered' %}
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="mb-0"><i class="bi bi-envelope-open-heart-fill"></i> Offered</h4>
+      <span class="mini">Track offer status and payments</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>ID</th><th>Parent</th><th>Offer Date</th><th>Status</th><th>Payment</th><th>Follow-up</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <form method="post" action="{{ url_for('offered_update', eid=r.enquiry_id) }}">
+              <td class="fw-semibold">{{ r.enquiry_id }}</td>
+              <td>{{ r.parent_first_name }} {{ r.parent_last_name }}</td>
+              <td><input class="form-control form-control-sm" type="date" name="offer_date" value="{{ r.offer_date or '' }}"></td>
+              <td>
+                <select class="form-select form-select-sm" name="offer_status">
+                  <option value=""></option>
+                  <option value="Accepted" {{ 'selected' if r.offer_status=='Accepted' else '' }}>Accepted</option>
+                  <option value="Rejected" {{ 'selected' if r.offer_status=='Rejected' else '' }}>Rejected</option>
+                </select>
+              </td>
+              <td>
+                <select class="form-select form-select-sm" name="payment_status">
+                  <option value=""></option>
+                  <option value="Deposit Paid" {{ 'selected' if r.payment_status=='Deposit Paid' else '' }}>Deposit Paid</option>
+                  <option value="Term 1 Fees Paid" {{ 'selected' if r.payment_status=='Term 1 Fees Paid' else '' }}>Term 1 Fees Paid</option>
+                  <option value="Annual Fees Paid" {{ 'selected' if r.payment_status=='Annual Fees Paid' else '' }}>Annual Fees Paid</option>
+                  <option value="No Payment" {{ 'selected' if r.payment_status=='No Payment' else '' }}>No Payment</option>
+                </select>
+                {% if r.payment_status in ['Term 1 Fees Paid','Annual Fees Paid'] %}
+                  <span class="badge rounded-pill badge-payment-green ms-2">Paid</span>
+                {% elif r.payment_status == 'Deposit Paid' %}
+                  <span class="badge rounded-pill badge-payment-orange ms-2">Deposit</span>
+                {% elif r.payment_status == 'No Payment' %}
+                  <span class="badge rounded-pill badge-payment-red ms-2">No Payment</span>
+                {% endif %}
+              </td>
+              <td>{{ r.follow_up_needed or '' }}</td>
+              <td><button class="btn btn-sm btn-primary"><i class="bi bi-save"></i> Save</button></td>
+            </form>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a href="{{ url_for('enquiries_list') }}" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+  </div>
+</div>
+{% endif %}
+
+{% if page == 'appointments' %}
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h4 class="mb-0"><i class="bi bi-calendar2-week-fill"></i> Appointments</h4>
+          <span class="mini">Unified view of Tours & Assessments</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr><th>Date</th><th>Time</th><th>Parent</th><th>Phone</th><th>Type</th></tr>
+            </thead>
+            <tbody>
+            {% for r in rows %}
+              <tr>
+                <td>{{ r.appointment_date or '' }}</td>
+                <td>{{ r.appointment_time or '' }}</td>
+                <td>{{ r.parent_name }}</td>
+                <td>{{ r.phone_number }}</td>
+                <td>
+                  {% if r.appointment_type == 'Tour' %}
+                    <span class="badge rounded-pill bg-info">Tour</span>
+                  {% else %}
+                    <span class="badge rounded-pill bg-warning text-dark">Assessment</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <a href="{{ url_for('enquiries_list') }}" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -71,7 +71,7 @@ list_template = """
 def list_enquiries():
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM enquiries")
+    cursor.execute("SELECT * FROM enquiries order by enquiry_id asc")
     enquiries = cursor.fetchall()
     cursor.close()
     conn.close()

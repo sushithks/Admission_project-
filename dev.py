@@ -151,20 +151,19 @@ def assessments_update(eid):
     """, (adate, atime, link, offered, letter, eid))
 
     if offered == 'Yes':
-        exists = run_query("SELECT 1 FROM offered WHERE enquiry_id=%s", (eid,), fetch=True)
-        if not exists:
-            run_query("""
-              INSERT INTO offered (
-                enquiry_id, enquiry_date, parent_first_name, parent_last_name, parent_email, phone_number,
-                assessment_date, assessment_time, assessment_notes_link, letter_sent,
-                offer_date, offer_status, payment_status, follow_up_needed
-              )
-              SELECT
-                enquiry_id, enquiry_date, parent_first_name, parent_last_name, parent_email, phone_number,
-                assessment_date, assessment_time, assessment_notes_link, letter_sent,
-                NULL, NULL, NULL, NULL
-              FROM assessments WHERE enquiry_id=%s
-            """, (eid,))
+        run_query("""
+          INSERT INTO offered (
+            enquiry_id, enquiry_date, parent_first_name, parent_last_name, parent_email, phone_number,
+            assessment_date, assessment_time, assessment_notes_link, letter_sent,
+            offer_date, offer_status, payment_status, follow_up_needed
+          )
+          SELECT
+            enquiry_id, enquiry_date, parent_first_name, parent_last_name, parent_email, phone_number,
+            assessment_date, assessment_time, assessment_notes_link, letter_sent,
+            NULL, NULL, NULL, NULL
+          FROM assessments WHERE enquiry_id=%s
+          ON DUPLICATE KEY UPDATE enquiry_id = enquiry_id
+        """, (eid,))
 
     return redirect(url_for('assessments_list'))
 

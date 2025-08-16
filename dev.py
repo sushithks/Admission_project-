@@ -13,6 +13,27 @@ db_config = {
 }
 # ==================================================
 
+BASE_COLS = """
+  enquiry_id,enquiry_date,source,parent_first_name,parent_last_name,parent_email,
+  country_code,phone_number,nationality,nationality_other,number_of_children,
+  current_curriculum,child1_name,child1_dob,child1_year_group,
+  child2_name,child2_dob,child2_year_group,
+  child3_name,child3_dob,child3_year_group,
+  notes,lead_owner,next_step,lead_status
+"""
+
+def copy_once(src_table: str, dst_table: str, eid: int):
+    # Idempotent copy: if row already exists (same enquiry_id), do nothing.
+    run_query(f"""
+        INSERT INTO {dst_table} ({BASE_COLS})
+        SELECT {BASE_COLS} FROM {src_table} WHERE enquiry_id=%s
+        ON DUPLICATE KEY UPDATE enquiry_id = enquiry_id
+    """, (eid,))
+
+
+
+
+
 def run_query(sql, params=(), fetch=False, dicts=True):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=dicts)

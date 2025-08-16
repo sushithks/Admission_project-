@@ -68,17 +68,21 @@ def enquiries_update(eid):
     enquiry_date = row[0]['enquiry_date'] if row else None
 
     if next_step == 'Tour Booked':
-        run_query(f"INSERT INTO tours ({cols}) SELECT {cols} FROM enquiries WHERE enquiry_id=%s", (eid,))
+        copy_once('enquiries', 'tours', eid)
+
     elif next_step == 'Assessment Booked':
-        run_query(f"INSERT INTO assessments ({cols}) SELECT {cols} FROM enquiries WHERE enquiry_id=%s", (eid,))
+        copy_once('enquiries', 'assessments', eid)
+
     elif next_step == 'No Reply':
-        run_query(f"INSERT INTO follow_ups_required ({cols}) SELECT {cols} FROM enquiries WHERE enquiry_id=%s", (eid,))
+        copy_once('enquiries', 'follow_ups_required', eid)
         if enquiry_date:
             follow_up_by = enquiry_date + timedelta(days=5)
-            run_query("UPDATE follow_ups_required SET follow_up_by=%s WHERE enquiry_id=%s", (follow_up_by, eid))
+            run_query("UPDATE follow_ups_required SET follow_up_by=%s WHERE enquiry_id=%s",
+                      (follow_up_by, eid))
+
     elif next_step == 'Closed Lead':
         run_query("UPDATE enquiries SET lead_status='Closed' WHERE enquiry_id=%s", (eid,))
-        run_query(f"INSERT INTO closed_leads ({cols}) SELECT {cols} FROM enquiries WHERE enquiry_id=%s", (eid,))
+        copy_once('enquiries', 'closed_leads', eid)
 
     return redirect(url_for('enquiries_list'))
 

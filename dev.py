@@ -13,6 +13,27 @@ db_config = {
 }
 # ==================================================
 
+BASE_COLS = """
+  enquiry_id,enquiry_date,source,parent_first_name,parent_last_name,parent_email,
+  country_code,phone_number,nationality,nationality_other,number_of_children,
+  current_curriculum,child1_name,child1_dob,child1_year_group,
+  child2_name,child2_dob,child2_year_group,
+  child3_name,child3_dob,child3_year_group,
+  notes,lead_owner,next_step,lead_status
+"""
+
+def copy_once(src_table: str, dst_table: str, eid: int):
+    # Idempotent copy: if row already exists (same enquiry_id), do nothing.
+    run_query(f"""
+        INSERT INTO {dst_table} ({BASE_COLS})
+        SELECT {BASE_COLS} FROM {src_table} WHERE enquiry_id=%s
+        ON DUPLICATE KEY UPDATE enquiry_id = enquiry_id
+    """, (eid,))
+
+
+
+
+
 def run_query(sql, params=(), fetch=False, dicts=True):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=dicts)
@@ -47,17 +68,21 @@ def enquiries_update(eid):
     enquiry_date = row[0]['enquiry_date'] if row else None
 
     if next_step == 'Tour Booked':
-        run_query(f"INSERT INTO tours ({cols}) SELECT {cols} FROM enquiries WHERE enquiry_id=%s", (eid,))
+        copy_once('enquiries', 'tours', eid)
+
     elif next_step == 'Assessment Booked':
-        run_query(f"INSERT INTO assessments ({cols}) SELECT {cols} FROM enquiries WHERE enquiry_id=%s", (eid,))
+        copy_once('enquiries', 'assessments', eid)
+
     elif next_step == 'No Reply':
-        run_query(f"INSERT INTO follow_ups_required ({cols}) SELECT {cols} FROM enquiries WHERE enquiry_id=%s", (eid,))
+        copy_once('enquiries', 'follow_ups_required', eid)
         if enquiry_date:
             follow_up_by = enquiry_date + timedelta(days=5)
-            run_query("UPDATE follow_ups_required SET follow_up_by=%s WHERE enquiry_id=%s", (follow_up_by, eid))
+            run_query("UPDATE follow_ups_required SET follow_up_by=%s WHERE enquiry_id=%s",
+                      (follow_up_by, eid))
+
     elif next_step == 'Closed Lead':
         run_query("UPDATE enquiries SET lead_status='Closed' WHERE enquiry_id=%s", (eid,))
-        run_query(f"INSERT INTO closed_leads ({cols}) SELECT {cols} FROM enquiries WHERE enquiry_id=%s", (eid,))
+        copy_once('enquiries', 'closed_leads', eid)
 
     return redirect(url_for('enquiries_list'))
 
@@ -89,16 +114,19 @@ def tours_update(eid):
     """
 
     if ns == 'Assessment Booked':
-        run_query(f"INSERT INTO assessments ({cols}) SELECT {cols} FROM tours WHERE enquiry_id=%s", (eid,))
+        copy_once('tours', 'assessments', eid)
+
     elif ns == 'No Reply':
-        run_query(f"INSERT INTO follow_ups_required ({cols}) SELECT {cols} FROM tours WHERE enquiry_id=%s", (eid,))
+        copy_once('tours', 'follow_ups_required', eid)
         row = run_query("SELECT enquiry_date FROM tours WHERE enquiry_id=%s", (eid,), fetch=True)
         if row and row[0]['enquiry_date']:
             follow_up_by = row[0]['enquiry_date'] + timedelta(days=5)
-            run_query("UPDATE follow_ups_required SET follow_up_by=%s WHERE enquiry_id=%s", (follow_up_by, eid))
+            run_query("UPDATE follow_ups_required SET follow_up_by=%s WHERE enquiry_id=%s",
+                      (follow_up_by, eid))
+
     elif ns == 'Closed Lead':
         run_query("UPDATE enquiries SET lead_status='Closed' WHERE enquiry_id=%s", (eid,))
-        run_query(f"INSERT INTO closed_leads ({cols}) SELECT {cols} FROM tours WHERE enquiry_id=%s", (eid,))
+        copy_once('tours', 'closed_leads', eid)
 
     return redirect(url_for('tours_list'))
 
@@ -123,20 +151,19 @@ def assessments_update(eid):
     """, (adate, atime, link, offered, letter, eid))
 
     if offered == 'Yes':
-        exists = run_query("SELECT 1 FROM offered WHERE enquiry_id=%s", (eid,), fetch=True)
-        if not exists:
-            run_query("""
-              INSERT INTO offered (
-                enquiry_id, enquiry_date, parent_first_name, parent_last_name, parent_email, phone_number,
-                assessment_date, assessment_time, assessment_notes_link, letter_sent,
-                offer_date, offer_status, payment_status, follow_up_needed
-              )
-              SELECT
-                enquiry_id, enquiry_date, parent_first_name, parent_last_name, parent_email, phone_number,
-                assessment_date, assessment_time, assessment_notes_link, letter_sent,
-                NULL, NULL, NULL, NULL
-              FROM assessments WHERE enquiry_id=%s
-            """, (eid,))
+        run_query("""
+          INSERT INTO offered (
+            enquiry_id, enquiry_date, parent_first_name, parent_last_name, parent_email, phone_number,
+            assessment_date, assessment_time, assessment_notes_link, letter_sent,
+            offer_date, offer_status, payment_status, follow_up_needed
+          )
+          SELECT
+            enquiry_id, enquiry_date, parent_first_name, parent_last_name, parent_email, phone_number,
+            assessment_date, assessment_time, assessment_notes_link, letter_sent,
+            NULL, NULL, NULL, NULL
+          FROM assessments WHERE enquiry_id=%s
+          ON DUPLICATE KEY UPDATE enquiry_id = enquiry_id
+        """, (eid,))
 
     return redirect(url_for('assessments_list'))
 

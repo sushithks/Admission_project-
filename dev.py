@@ -114,16 +114,19 @@ def tours_update(eid):
     """
 
     if ns == 'Assessment Booked':
-        run_query(f"INSERT INTO assessments ({cols}) SELECT {cols} FROM tours WHERE enquiry_id=%s", (eid,))
+        copy_once('tours', 'assessments', eid)
+
     elif ns == 'No Reply':
-        run_query(f"INSERT INTO follow_ups_required ({cols}) SELECT {cols} FROM tours WHERE enquiry_id=%s", (eid,))
+        copy_once('tours', 'follow_ups_required', eid)
         row = run_query("SELECT enquiry_date FROM tours WHERE enquiry_id=%s", (eid,), fetch=True)
         if row and row[0]['enquiry_date']:
             follow_up_by = row[0]['enquiry_date'] + timedelta(days=5)
-            run_query("UPDATE follow_ups_required SET follow_up_by=%s WHERE enquiry_id=%s", (follow_up_by, eid))
+            run_query("UPDATE follow_ups_required SET follow_up_by=%s WHERE enquiry_id=%s",
+                      (follow_up_by, eid))
+
     elif ns == 'Closed Lead':
         run_query("UPDATE enquiries SET lead_status='Closed' WHERE enquiry_id=%s", (eid,))
-        run_query(f"INSERT INTO closed_leads ({cols}) SELECT {cols} FROM tours WHERE enquiry_id=%s", (eid,))
+        copy_once('tours', 'closed_leads', eid)
 
     return redirect(url_for('tours_list'))
 

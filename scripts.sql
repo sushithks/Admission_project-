@@ -294,3 +294,11 @@ INSERT INTO enquiries (
  'Isla', '2021-03-30', 'FS1',
  'Looking for transport facilities', 'Jala', 'Assessment Booked', 'Live');
 
+
+
+
+ALTER TABLE tours ADD UNIQUE (enquiry_id);
+ALTER TABLE assessments ADD UNIQUE (enquiry_id);
+ALTER TABLE follow_ups_required ADD UNIQUE (enquiry_id);
+ALTER TABLE closed_leads ADD UNIQUE (enquiry_id);
+

@@ -23,11 +23,10 @@ BASE_COLS = """
 """
 
 def copy_once(src_table: str, dst_table: str, eid: int):
-    # Idempotent copy: if row already exists (same enquiry_id), do nothing.
     run_query(f"""
         INSERT INTO {dst_table} ({BASE_COLS})
         SELECT {BASE_COLS} FROM {src_table} WHERE enquiry_id=%s
-        ON DUPLICATE KEY UPDATE enquiry_id = enquiry_id
+        ON DUPLICATE KEY UPDATE {dst_table}.enquiry_id = {dst_table}.enquiry_id
     """, (eid,))
 
 

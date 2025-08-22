@@ -4,14 +4,12 @@ import mysql.connector
 
 app = Flask(__name__)
 
-# ================== UPDATE THESE ==================
 db_config = {
     'host': '127.0.0.1',
     'user': 'root',
     'password': '***********',
     'database': 'admissions'
 }
-# ==================================================
 
 BASE_COLS = """
   enquiry_id,enquiry_date,source,parent_first_name,parent_last_name,parent_email,

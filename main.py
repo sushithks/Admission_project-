@@ -4,7 +4,6 @@ import mysql.connector
 
 app = Flask(__name__)
 
-# UPDATE these with your database credentials
 db_config = {
     'host': '127.0.0.1',
     'user': 'root',

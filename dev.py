@@ -92,7 +92,13 @@ def enquiries_update(eid):
 # -------------------- TOURS --------------------
 @app.route('/tours')
 def tours_list():
-    rows = run_query("SELECT * FROM tours ORDER BY tour_date IS NULL, tour_date, tour_time", fetch=True)
+    rows = run_query("""
+        SELECT
+          t.*,
+          DATEDIFF(CURDATE(), t.enquiry_date) AS lead_age_days
+        FROM tours t
+        ORDER BY t.tour_date IS NULL, t.tour_date, t.tour_time
+    """, fetch=True)
     return render_template('app.html', page='tours', rows=rows)
 
 @app.route('/tours/<int:eid>/update', methods=['POST'])

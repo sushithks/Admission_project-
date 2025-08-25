@@ -47,7 +47,7 @@ def enquiries_list():
     rows = run_query("""
             SELECT
               e.*,
-              DATEDIFF(CURDATE(), e.enquiry_date) AS lead_days
+              DATEDIFF(CURDATE(), e.enquiry_date) AS lead_age_days
             FROM enquiries e
             ORDER BY e.enquiry_id DESC
         """, fetch=True)

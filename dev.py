@@ -44,7 +44,13 @@ def run_query(sql, params=(), fetch=False, dicts=True):
 # -------------------- ENQUIRIES --------------------
 @app.route('/')
 def enquiries_list():
-    rows = run_query("SELECT * FROM enquiries ORDER BY enquiry_id DESC", fetch=True)
+    rows = run_query("""
+            SELECT
+              e.*,
+              DATEDIFF(CURDATE(), e.enquiry_date) AS lead_age_days
+            FROM enquiries e
+            ORDER BY e.enquiry_id DESC
+        """, fetch=True)
     return render_template('app.html', page='enquiries', rows=rows)
 
 @app.route('/enquiries/<int:eid>/update', methods=['POST'])

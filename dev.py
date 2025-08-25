@@ -97,7 +97,7 @@ def tours_list():
           t.*,
           DATEDIFF(CURDATE(), t.enquiry_date) AS lead_age_days
         FROM tours t
-        ORDER BY t.tour_date IS NULL, t.tour_date
+        ORDER BY t.tour_date IS NULL, t.tour_date, t.tour_time
     """, fetch=True)
     return render_template('app.html', page='tours', rows=rows)
 

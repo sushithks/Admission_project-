@@ -147,7 +147,7 @@ def assessments_list():
           a.*,
           DATEDIFF(CURDATE(), a.enquiry_date) AS lead_age_days
         FROM assessments a
-        ORDER BY a.assessment_date IS NULL
+        ORDER BY a.assessment_date IS NULL, a.assessment_date, a.assessment_time
     """, fetch=True)
     return render_template('app.html', page='assessments', rows=rows)
 

@@ -142,8 +142,16 @@ def tours_update(eid):
 # -------------------- ASSESSMENTS --------------------
 @app.route('/assessments')
 def assessments_list():
-    rows = run_query("SELECT * FROM assessments ORDER BY assessment_date IS NULL, assessment_date, assessment_time", fetch=True)
+    rows = run_query("""
+        SELECT
+          a.*,
+          DATEDIFF(CURDATE(), a.enquiry_date) AS lead_age_days
+        FROM assessments a
+        ORDER BY a.assessment_date IS NULL
+    """, fetch=True)
     return render_template('app.html', page='assessments', rows=rows)
+
+
 
 @app.route('/assessments/<int:eid>/update', methods=['POST'])
 def assessments_update(eid):

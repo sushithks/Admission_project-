@@ -187,7 +187,12 @@ def assessments_update(eid):
 # -------------------- OFFERED --------------------
 @app.route('/offered')
 def offered_list():
-    rows = run_query("SELECT * FROM offered ORDER BY offer_date IS NULL, offer_date", fetch=True)
+    rows = run_query("""
+        SELECT
+          o.*,
+          DATEDIFF(CURDATE(), o.enquiry_date) AS lead_age_days
+        FROM offered o
+    """, fetch=True)
     return render_template('app.html', page='offered', rows=rows)
 
 @app.route('/offered/<int:eid>/update', methods=['POST'])

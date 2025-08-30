@@ -192,6 +192,7 @@ def offered_list():
           o.*,
           DATEDIFF(CURDATE(), o.enquiry_date) AS lead_age_days
         FROM offered o
+        ORDER BY o.offer_date IS NULL
     """, fetch=True)
     return render_template('app.html', page='offered', rows=rows)
 

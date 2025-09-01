@@ -42,30 +42,18 @@ def run_query(sql, params=(), fetch=False, dicts=True):
     return rows
 
 # -------------------- ENQUIRIES --------------------
-@app.route('/')
-def enquiries_list():
-    rows = run_query("""
-            SELECT
-              e.*,
-              DATEDIFF(CURDATE(), e.enquiry_date) AS lead_age_days
-            FROM enquiries e
-            ORDER BY e.enquiry_id DESC
-        """, fetch=True)
-    return render_template('app.html', page='enquiries', rows=rows)
-
 @app.route('/enquiries/<int:eid>/update', methods=['POST'])
 def enquiries_update(eid):
     next_step = request.form.get('next_step') or None
-    run_query("UPDATE enquiries SET next_step=%s WHERE enquiry_id=%s", (next_step, eid))
 
-    cols = """
-      enquiry_id,enquiry_date,source,parent_first_name,parent_last_name,parent_email,
-      country_code,phone_number,nationality,nationality_other,number_of_children,
-      current_curriculum,child1_name,child1_dob,child1_year_group,
-      child2_name,child2_dob,child2_year_group,
-      child3_name,child3_dob,child3_year_group,
-      notes,lead_owner,next_step,lead_status
-    """
+    # Touch activity timestamp and reset auto_follow_up_by by default
+    run_query("""
+        UPDATE enquiries
+        SET next_step=%s,
+            last_activity_at=NOW(),
+            auto_follow_up_by=NULL
+        WHERE enquiry_id=%s
+    """, (next_step, eid))
 
     row = run_query("SELECT enquiry_date FROM enquiries WHERE enquiry_id=%s", (eid,), fetch=True)
     enquiry_date = row[0]['enquiry_date'] if row else None
@@ -80,11 +68,23 @@ def enquiries_update(eid):
         copy_once('enquiries', 'follow_ups_required', eid)
         if enquiry_date:
             follow_up_by = enquiry_date + timedelta(days=5)
-            run_query("UPDATE follow_ups_required SET follow_up_by=%s WHERE enquiry_id=%s",
-                      (follow_up_by, eid))
+
+            # Persist on follow_ups_required (existing behavior)
+            run_query("""
+                UPDATE follow_ups_required
+                SET follow_up_by=%s
+                WHERE enquiry_id=%s
+            """, (follow_up_by, eid))
+
+            # NEW: persist on enquiries as well (the transformation)
+            run_query("""
+                UPDATE enquiries
+                SET auto_follow_up_by=%s
+                WHERE enquiry_id=%s
+            """, (follow_up_by, eid))
 
     elif next_step == 'Closed Lead':
-        run_query("UPDATE enquiries SET lead_status='Closed' WHERE enquiry_id=%s", (eid,))
+        run_query("UPDATE enquiries SET lead_status='Closed', auto_follow_up_by=NULL WHERE enquiry_id=%s", (eid,))
         copy_once('enquiries', 'closed_leads', eid)
 
     return redirect(url_for('enquiries_list'))

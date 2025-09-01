@@ -49,7 +49,8 @@ def enquiries_update(eid):
     # Touch activity timestamp and reset auto_follow_up_by by default
     run_query("""
         UPDATE enquiries
-        SET last_activity_at=NOW(),
+        SET next_step=%s,
+            last_activity_at=NOW(),
             auto_follow_up_by=NULL
         WHERE enquiry_id=%s
     """, (next_step, eid))

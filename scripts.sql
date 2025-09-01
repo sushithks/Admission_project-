@@ -302,3 +302,12 @@ ALTER TABLE assessments ADD UNIQUE (enquiry_id);
 ALTER TABLE follow_ups_required ADD UNIQUE (enquiry_id);
 ALTER TABLE closed_leads ADD UNIQUE (enquiry_id);
 
+
+
+ALTER TABLE enquiries
+  ADD COLUMN last_activity_at DATETIME NULL,
+  ADD COLUMN auto_follow_up_by DATE NULL;
+
+-- (optional but recommended for filters/sorting)
+CREATE INDEX idx_enquiries_auto_follow_up_by ON enquiries(auto_follow_up_by);
+CREATE INDEX idx_enquiries_last_activity_at ON enquiries(last_activity_at);

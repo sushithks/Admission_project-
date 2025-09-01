@@ -221,7 +221,7 @@ def appointments_list():
           ap.*,
           DATEDIFF(CURDATE(), ap.appointment_date) AS lead_age_days
         FROM appointments ap
-        ORDER BY ap.appointment_date
+        ORDER BY ap.appointment_date, ap.appointment_time
     """, fetch=True)
     return render_template('app.html', page='appointments', rows=rows)
 if __name__ == '__main__':

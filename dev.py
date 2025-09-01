@@ -216,8 +216,13 @@ def offered_update(eid):
 # -------------------- APPOINTMENTS --------------------
 @app.route('/appointments')
 def appointments_list():
-    rows = run_query("SELECT * FROM appointments ORDER BY appointment_date, appointment_time", fetch=True)
+    rows = run_query("""
+        SELECT
+          ap.*,
+          DATEDIFF(CURDATE(), ap.appointment_date) AS lead_age_days
+        FROM appointments ap
+        ORDER BY ap.appointment_date, ap.appointment_time
+    """, fetch=True)
     return render_template('app.html', page='appointments', rows=rows)
-
 if __name__ == '__main__':
     app.run(debug=True)

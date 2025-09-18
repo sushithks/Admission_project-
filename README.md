@@ -59,3 +59,20 @@ Fields include:
   - % Enquiries → Tours / Assessments / Offers  
   - Total Enrolled (filterable by Year Group)  
   - Pipeline Follow Ups and Lead Source % mix
+
+## 🏗️ Architecture
+```
+Flask (Blueprints, Jinja2)
+ ├─ REST endpoints for CRUD & Next Step actions
+ ├─ WTForms/validations (email/phone/ints)
+ └─ Services layer (copy/move row logic, due dates)
+
+MySQL (InnoDB)
+ ├─ Normalized tables for master/tours/assessments/offered/closed/followups
+ └─ Views for appointments + dashboard rollups
+
+ETL / Analytics
+ ├─ Scheduled jobs to refresh weekly KPIs
+```
+
+**Author:** Sushith Karuvelil Suthan · Data Engineer  

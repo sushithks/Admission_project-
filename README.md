@@ -75,4 +75,5 @@ ETL / Analytics
  ├─ Scheduled jobs to refresh weekly KPIs
 ```
 
-**Author:** Sushith Karuvelil Suthan · Data Engineer  
+**Author:** 
+Sushith Karuvelil Suthan · Data Engineer  
